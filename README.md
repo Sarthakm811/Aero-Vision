@@ -61,13 +61,15 @@ cd Aero-Vision
 
 2. **Install dependencies**
 ```bash
-pip install -r requirements_enhanced.txt
+pip install -r requirements.txt
 ```
 
 3. **Run the application**
 ```bash
-streamlit run streamlit_app_ultimate.py
+streamlit run app.py
 ```
+
+Or simply double-click `launch_streamlit.bat` on Windows
 
 4. **Access the app**
 Open your browser and navigate to `http://localhost:8501`
@@ -84,12 +86,15 @@ Open your browser and navigate to `http://localhost:8501`
 
 ```
 Aero-Vision/
-├── streamlit_app_ultimate.py    # Main application
-├── streamlit_app_enhanced.py    # Enhanced version
-├── streamlit_app.py              # Original version
-├── requirements_enhanced.txt     # Dependencies
+├── app.py                        # Main application
+├── launch_streamlit.bat          # Windows launcher
+├── requirements.txt              # Dependencies
 ├── flight_delay_model.joblib     # ML model (if available)
 ├── 2019-2023/                    # Flight data directory
+├── src/                          # Source code modules
+│   ├── data_ingestion/
+│   ├── models/
+│   └── preprocessing/
 ├── README.md                     # Documentation
 └── .gitignore                    # Git ignore rules
 ```

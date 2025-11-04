@@ -1,10 +1,10 @@
 @echo off
 echo ========================================
-echo   ATC Decision Support System
-echo   Starting Streamlit Application...
+echo   AeroVision - Flight Intelligence
+echo   Starting Application...
 echo ========================================
 echo.
 
-streamlit run streamlit_app.py
+streamlit run app.py
 
 pause

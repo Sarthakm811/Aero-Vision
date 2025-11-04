@@ -1,17 +1,25 @@
+# AeroVision - Flight Intelligence System
 # Core Dependencies
+
+# Web Framework
 streamlit>=1.30.0
+
+# Data Processing
 pandas>=2.0.0
 numpy>=1.24.0
+python-dateutil>=2.8.0
+
+# Machine Learning
 scikit-learn>=1.3.0
 joblib>=1.3.0
+scipy>=1.11.0
 
 # Visualization
 plotly>=5.18.0
 matplotlib>=3.7.0
 seaborn>=0.12.0
+folium>=0.14.0
+streamlit-folium>=0.15.0
 
-# Data Processing
-scipy>=1.11.0
-
-# Optional (if needed)
-python-dateutil>=2.8.0
+# Export & File Handling
+openpyxl>=3.1.0
