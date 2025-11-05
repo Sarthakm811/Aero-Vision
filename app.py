@@ -208,6 +208,37 @@ def logout_user():
     st.session_state.username = None
     st.session_state.user_role = None
 
+def has_permission(required_role=None, page_name=None):
+    """Check if user has permission to access a page"""
+    if not st.session_state.logged_in:
+        return False
+    
+    user_role = st.session_state.user_role
+    
+    # Admin has access to everything
+    if user_role == 'admin':
+        return True
+    
+    # Define role-based page access
+    role_permissions = {
+        'controller': [
+            '📊 Dashboard', '🗺️ Flight Map', '🎨 3D Visualization',
+            '🔮 Predict Delay', '📋 Batch Prediction', '🔍 Advanced Search',
+            '🔔 Alerts', '🌤️ Weather', '💬 Collaboration', '📚 Help & Guide'
+        ],
+        'analyst': [
+            '📊 Dashboard', '🗺️ Flight Map', '🎨 3D Visualization',
+            '📈 Analytics', '📊 Historical Compare', '📄 Reports',
+            '📊 Data Quality', '🔍 Advanced Search', '📚 Help & Guide'
+        ]
+    }
+    
+    # Check if page is in user's allowed pages
+    if page_name and user_role in role_permissions:
+        return page_name in role_permissions[user_role]
+    
+    return True
+
 def add_alert(message, severity='info'):
     alert = {
         'timestamp': datetime.now(),
@@ -353,21 +384,76 @@ if not st.session_state.logged_in:
                 st.error("❌ Invalid credentials")
         
         st.markdown("---")
-        st.info("""
-        **Demo Accounts:**
-        - admin / admin123 (Full Access)
-        - controller / atc123 (Controller View)
-        - analyst / analyst123 (Analytics View)
-        """)
+        
+        st.markdown("""
+        <div style='background: linear-gradient(135deg, #0d2020 0%, #102828 100%); 
+                    padding: 20px; border-radius: 12px; border: 2px solid #00ffcc;'>
+            <h3 style='color: #00ffcc; margin-top: 0;'>🔐 Demo Accounts</h3>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.markdown("""
+            <div style='background: #1a2a1a; padding: 15px; border-radius: 10px; border: 2px solid #00ff88;'>
+                <h4 style='color: #00ff88; margin: 0;'>👑 Admin</h4>
+                <p style='color: #66ffdd; font-size: 0.9em; margin: 5px 0;'><b>Username:</b> admin</p>
+                <p style='color: #66ffdd; font-size: 0.9em; margin: 5px 0;'><b>Password:</b> admin123</p>
+                <hr style='border-color: #00ff88;'>
+                <p style='color: #00ff88; font-size: 0.85em; margin: 5px 0;'><b>✅ Full Access</b></p>
+                <p style='color: #66ffdd; font-size: 0.8em;'>• All Features<br>• System Config<br>• User Management<br>• API Integration</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown("""
+            <div style='background: #1a1a2a; padding: 15px; border-radius: 10px; border: 2px solid #00aaff;'>
+                <h4 style='color: #00aaff; margin: 0;'>✈️ Controller</h4>
+                <p style='color: #66ffdd; font-size: 0.9em; margin: 5px 0;'><b>Username:</b> controller</p>
+                <p style='color: #66ffdd; font-size: 0.9em; margin: 5px 0;'><b>Password:</b> atc123</p>
+                <hr style='border-color: #00aaff;'>
+                <p style='color: #00aaff; font-size: 0.85em; margin: 5px 0;'><b>✅ Operations</b></p>
+                <p style='color: #66ffdd; font-size: 0.8em;'>• Dashboard<br>• Predictions<br>• Flight Map<br>• Alerts & Weather</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col3:
+            st.markdown("""
+            <div style='background: #2a1a2a; padding: 15px; border-radius: 10px; border: 2px solid #bb86fc;'>
+                <h4 style='color: #bb86fc; margin: 0;'>📊 Analyst</h4>
+                <p style='color: #66ffdd; font-size: 0.9em; margin: 5px 0;'><b>Username:</b> analyst</p>
+                <p style='color: #66ffdd; font-size: 0.9em; margin: 5px 0;'><b>Password:</b> analyst123</p>
+                <hr style='border-color: #bb86fc;'>
+                <p style='color: #bb86fc; font-size: 0.85em; margin: 5px 0;'><b>✅ Analytics</b></p>
+                <p style='color: #66ffdd; font-size: 0.8em;'>• Dashboard<br>• Reports<br>• Data Quality<br>• Historical Data</p>
+            </div>
+            """, unsafe_allow_html=True)
     st.stop()
 
 # MAIN APPLICATION
+# Role-based styling
+role_colors = {
+    'admin': '#00ff88',
+    'controller': '#00aaff',
+    'analyst': '#bb86fc'
+}
+role_icons = {
+    'admin': '👑',
+    'controller': '✈️',
+    'analyst': '📊'
+}
+
 st.markdown(f"""
 <div style='text-align: center; padding: 20px; background: linear-gradient(90deg, #0a1a1a 0%, #0d3333 50%, #0a1a1a 100%); 
             border-radius: 15px; border: 2px solid #00ffcc; margin-bottom: 20px;'>
-    <h1 style='margin: 0; font-size: 2.5em; color: #00ffcc;'>✈️ ATC ULTIMATE SYSTEM</h1>
+    <h1 style='margin: 0; font-size: 2.5em; color: #00ffcc;'>✈️ AeroVision</h1>
     <p style='font-size: 1em; color: #66ffdd; margin-top: 10px;'>
-        User: {st.session_state.username} ({st.session_state.user_role.upper()}) | Score: {st.session_state.user_score} 🏆
+        User: <span style='color: {role_colors.get(st.session_state.user_role, "#00ffcc")}; font-weight: bold;'>
+        {role_icons.get(st.session_state.user_role, "👤")} {st.session_state.username}</span> 
+        (<span style='color: {role_colors.get(st.session_state.user_role, "#00ffcc")}; 
+        text-transform: uppercase; font-weight: bold;'>{st.session_state.user_role}</span>) 
+        | Score: {st.session_state.user_score} 🏆
     </p>
 </div>
 """, unsafe_allow_html=True)
@@ -418,30 +504,24 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
     
-    # Core Features
-    st.markdown("**📊 Core Features**")
-    core_pages = ["📊 Dashboard", "🗺️ Flight Map", "🎨 3D Visualization"]
+    # Define all pages by category
+    all_page_categories = {
+        "📊 Core Features": ["📊 Dashboard", "🗺️ Flight Map", "🎨 3D Visualization"],
+        "✈️ Operations": ["🔮 Predict Delay", "📋 Batch Prediction", "🔍 Advanced Search"],
+        "📈 Analytics": ["📈 Analytics", "📊 Historical Compare", "📄 Reports", "📊 Data Quality"],
+        "⚙️ Management": ["🔔 Alerts", "🌤️ Weather", "💬 Collaboration", "🎮 Scenario Simulator"],
+        "🔧 System": ["🔌 API Integration", "📚 Help & Guide", "⚙️ System Status"]
+    }
     
-    # Operations
-    st.markdown("**✈️ Operations**")
-    ops_pages = ["🔮 Predict Delay", "📋 Batch Prediction", "🔍 Advanced Search"]
+    # Filter pages based on user role
+    available_pages = []
+    for category, pages in all_page_categories.items():
+        category_pages = [p for p in pages if has_permission(page_name=p)]
+        if category_pages:
+            st.markdown(f"**{category}**")
+            available_pages.extend(category_pages)
     
-    # Analytics & Reports
-    st.markdown("**📈 Analytics**")
-    analytics_pages = ["📈 Analytics", "📊 Historical Compare", "📄 Reports", "📊 Data Quality"]
-    
-    # Management
-    st.markdown("**⚙️ Management**")
-    mgmt_pages = ["🔔 Alerts", "🌤️ Weather", "💬 Collaboration", "🎮 Scenario Simulator"]
-    
-    # System
-    st.markdown("**🔧 System**")
-    system_pages = ["🔌 API Integration", "📚 Help & Guide", "⚙️ System Status"]
-    
-    # Combine all pages
-    all_pages = core_pages + ops_pages + analytics_pages + mgmt_pages + system_pages
-    
-    page = st.radio("Select Page", all_pages, label_visibility="collapsed")
+    page = st.radio("Select Page", available_pages, label_visibility="collapsed")
     
     st.markdown("---")
     
@@ -538,6 +618,10 @@ with st.sidebar:
 
 # PAGE: DASHBOARD
 if page == "📊 Dashboard":
+    if not has_permission(page_name=page):
+        st.error("🚫 Access Denied: You don't have permission to view this page.")
+        st.stop()
+    
     st.markdown("<h2 style='text-align: center; color: #00ffcc;'>📊 REAL-TIME DASHBOARD</h2>", unsafe_allow_html=True)
     
     # Real-time ticker
