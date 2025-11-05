@@ -158,16 +158,8 @@ def load_flight_data():
         df = pd.DataFrame(data)
     return df
 
-@st.cache_data
-def get_weather_data(airport_code):
-    weather_conditions = ['Clear', 'Cloudy', 'Rainy', 'Stormy', 'Foggy']
-    return {
-        'condition': np.random.choice(weather_conditions),
-        'temperature': np.random.randint(40, 90),
-        'wind_speed': np.random.randint(0, 30),
-        'visibility': np.random.randint(1, 10),
-        'precipitation': np.random.randint(0, 100)
-    }
+# Weather data function removed - weather impact is still considered in predictions
+# but standalone weather display feature was removed
 
 def calculate_delay_cost(delay_minutes, num_passengers=150):
     fuel_cost = delay_minutes * 50
@@ -219,17 +211,17 @@ def has_permission(required_role=None, page_name=None):
     if user_role == 'admin':
         return True
     
-    # Define role-based page access
+    # Define role-based page access (Streamlined)
     role_permissions = {
         'controller': [
-            '📊 Dashboard', '🗺️ Flight Map', '🎨 3D Visualization',
+            '📊 Dashboard', '🗺️ Flight Map',
             '🔮 Predict Delay', '📋 Batch Prediction', '🔍 Advanced Search',
-            '🔔 Alerts', '🌤️ Weather', '💬 Collaboration', '📚 Help & Guide'
+            '🔔 Alerts', '📚 Help & Guide'
         ],
         'analyst': [
-            '📊 Dashboard', '🗺️ Flight Map', '🎨 3D Visualization',
-            '📈 Analytics', '📊 Historical Compare', '📄 Reports',
-            '📊 Data Quality', '🔍 Advanced Search', '📚 Help & Guide'
+            '📊 Dashboard', '🗺️ Flight Map',
+            '📄 Reports', '📊 Historical Compare', '🔍 Advanced Search',
+            '📚 Help & Guide'
         ]
     }
     
@@ -278,20 +270,8 @@ def check_achievements():
             st.session_state.achievements.append(achievement['name'])
             add_notification(f"Achievement Unlocked: {achievement['name']}", "success")
 
-def add_comment(user, message, flight_id=None):
-    comment = {
-        'timestamp': datetime.now(),
-        'user': user,
-        'message': message,
-        'flight_id': flight_id
-    }
-    st.session_state.comments.insert(0, comment)
-
-def calculate_data_quality_score(data):
-    total_fields = len(data.columns) * len(data)
-    missing_data = data.isnull().sum().sum()
-    quality_score = ((total_fields - missing_data) / total_fields) * 100
-    return quality_score
+# Removed unused functions: add_comment, calculate_data_quality_score, get_weather_data
+# These were part of removed features (Collaboration, Data Quality, Weather)
 
 def create_flight_map(flight_data):
     m = folium.Map(location=[39.8283, -98.5795], zoom_start=4, tiles='CartoDB dark_matter')
@@ -308,38 +288,6 @@ def create_flight_map(flight_data):
                 fillColor=color
             ).add_to(m)
     return m
-
-def create_3d_flight_visualization(flight_data):
-    """Create 3D flight path visualization"""
-    fig = go.Figure(data=[go.Scatter3d(
-        x=flight_data['Longitude'][:100],
-        y=flight_data['Latitude'][:100],
-        z=flight_data['DepDelay'][:100],
-        mode='markers',
-        marker=dict(
-            size=5,
-            color=flight_data['DepDelay'][:100],
-            colorscale='RdYlGn_r',
-            showscale=True,
-            colorbar=dict(title="Delay (min)")
-        ),
-        text=[f"Flight: {row['FlightNumber']}<br>Delay: {row['DepDelay']} min" 
-              for idx, row in flight_data[:100].iterrows()],
-        hoverinfo='text'
-    )])
-    
-    fig.update_layout(
-        scene=dict(
-            xaxis_title='Longitude',
-            yaxis_title='Latitude',
-            zaxis_title='Delay (min)',
-            bgcolor='#0a1a1a'
-        ),
-        paper_bgcolor='#0a1a1a',
-        font_color='#00ffcc',
-        height=600
-    )
-    return fig
 
 def export_to_excel(data):
     output = BytesIO()
@@ -504,13 +452,13 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
     
-    # Define all pages by category
+    # Define all pages by category (Streamlined)
     all_page_categories = {
-        "📊 Core Features": ["📊 Dashboard", "🗺️ Flight Map", "🎨 3D Visualization"],
+        "📊 Core Features": ["📊 Dashboard", "🗺️ Flight Map"],
         "✈️ Operations": ["🔮 Predict Delay", "📋 Batch Prediction", "🔍 Advanced Search"],
-        "📈 Analytics": ["📈 Analytics", "📊 Historical Compare", "📄 Reports", "📊 Data Quality"],
-        "⚙️ Management": ["🔔 Alerts", "🌤️ Weather", "💬 Collaboration", "🎮 Scenario Simulator"],
-        "🔧 System": ["🔌 API Integration", "📚 Help & Guide", "⚙️ System Status"]
+        "📈 Analytics": ["📄 Reports", "📊 Historical Compare"],
+        "⚙️ Management": ["🔔 Alerts", "🎮 Scenario Simulator"],
+        "🔧 System": ["📚 Help & Guide", "⚙️ System Status"]
     }
     
     # Filter pages based on user role
@@ -701,26 +649,6 @@ if page == "📊 Dashboard":
         add_score(5, "Manual data refresh")
         st.rerun()
 
-# PAGE: 3D VISUALIZATION
-elif page == "🎨 3D Visualization":
-    st.markdown("<h2 style='text-align: center; color: #00ffcc;'>🎨 3D FLIGHT VISUALIZATION</h2>", unsafe_allow_html=True)
-    
-    st.info("Interactive 3D view of flight delays across geographic locations")
-    
-    fig = create_3d_flight_visualization(flight_data)
-    st.plotly_chart(fig, use_container_width=True)
-    
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("🟢 Low Delay (<15 min)", (flight_data['DepDelay'] <= 15).sum())
-    with col2:
-        st.metric("🟡 Medium Delay (15-30 min)", 
-                 ((flight_data['DepDelay'] > 15) & (flight_data['DepDelay'] <= 30)).sum())
-    with col3:
-        st.metric("🔴 High Delay (>30 min)", (flight_data['DepDelay'] > 30).sum())
-    
-    add_score(5, "Viewed 3D visualization")
-
 # PAGE: ADVANCED SEARCH
 elif page == "🔍 Advanced Search":
     st.markdown("<h2 style='text-align: center; color: #00ffcc;'>🔍 ADVANCED SEARCH & FILTERING</h2>", unsafe_allow_html=True)
@@ -779,59 +707,6 @@ elif page == "🔍 Advanced Search":
         add_score(5, "Advanced search performed")
     else:
         st.warning("No flights match your search criteria")
-
-# PAGE: COLLABORATION
-elif page == "💬 Collaboration":
-    st.markdown("<h2 style='text-align: center; color: #00ffcc;'>💬 TEAM COLLABORATION</h2>", unsafe_allow_html=True)
-    
-    tab1, tab2 = st.tabs(["💬 Team Chat", "📝 Flight Annotations"])
-    
-    with tab1:
-        st.subheader("💬 Team Discussion")
-        
-        # Display comments
-        for comment in st.session_state.comments[:10]:
-            st.markdown(f"""
-            <div style='background: linear-gradient(135deg, #0d2020 0%, #102828 100%); 
-                        padding: 15px; border-radius: 10px; border-left: 4px solid #00ffcc; margin-bottom: 10px;'>
-                <p style='color: #00ffcc; margin: 0; font-weight: bold;'>👤 {comment['user']}</p>
-                <p style='color: #66ffdd; margin: 5px 0;'>{comment['message']}</p>
-                <p style='color: #66ffdd; margin: 0; font-size: 0.85em;'>
-                    🕐 {comment['timestamp'].strftime('%Y-%m-%d %H:%M:%S')}
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        st.markdown("---")
-        
-        # Add new comment
-        new_comment = st.text_area("✍️ Add Comment", placeholder="Share your insights...")
-        if st.button("📤 Post Comment"):
-            if new_comment:
-                add_comment(st.session_state.username, new_comment)
-                add_score(5, "Team collaboration")
-                st.success("✅ Comment posted!")
-                st.rerun()
-    
-    with tab2:
-        st.subheader("📝 Flight Annotations")
-        
-        selected_flight = st.selectbox("Select Flight", flight_data['FlightNumber'].head(20))
-        
-        annotation = st.text_area("Add Note", placeholder="Add notes about this flight...")
-        priority = st.select_slider("Priority", ['Low', 'Medium', 'High', 'Critical'])
-        
-        if st.button("💾 Save Annotation"):
-            add_comment(st.session_state.username, f"[{priority}] {annotation}", selected_flight)
-            add_score(5, "Flight annotation")
-            st.success("✅ Annotation saved!")
-        
-        st.markdown("---")
-        st.subheader("📋 Recent Annotations")
-        
-        flight_comments = [c for c in st.session_state.comments if c.get('flight_id')]
-        for comment in flight_comments[:5]:
-            st.info(f"**Flight {comment['flight_id']}** - {comment['message']}")
 
 # PAGE: SCENARIO SIMULATOR
 elif page == "🎮 Scenario Simulator":
@@ -909,146 +784,8 @@ elif page == "🎮 Scenario Simulator":
             
             add_score(10, "Scenario simulation")
 
-# PAGE: DATA QUALITY
-elif page == "📊 Data Quality":
-    st.markdown("<h2 style='text-align: center; color: #00ffcc;'>📊 DATA QUALITY DASHBOARD</h2>", unsafe_allow_html=True)
-    
-    quality_score = calculate_data_quality_score(flight_data)
-    
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        color = "#00ffcc" if quality_score >= 90 else "#ffaa00" if quality_score >= 70 else "#ff4141"
-        st.markdown(f"""
-        <div class='metric-card' style='text-align: center; border-color: {color};'>
-            <p style='color: #66ffdd;'>📊 QUALITY SCORE</p>
-            <p style='color: {color}; font-size: 3em; font-weight: bold;'>{quality_score:.1f}%</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        missing_count = flight_data.isnull().sum().sum()
-        st.metric("❌ Missing Values", missing_count)
-    
-    with col3:
-        duplicate_count = flight_data.duplicated().sum()
-        st.metric("🔄 Duplicates", duplicate_count)
-    
-    with col4:
-        good_quality = (flight_data['DataQuality'] == 'Good').sum()
-        st.metric("✅ Good Quality", good_quality)
-    
-    st.markdown("---")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.subheader("📉 Missing Data by Column")
-        missing_by_col = flight_data.isnull().sum()
-        if missing_by_col.sum() > 0:
-            fig = px.bar(x=missing_by_col.index, y=missing_by_col.values,
-                        color_discrete_sequence=['#ff4141'])
-            fig.update_layout(plot_bgcolor='#0a1a1a', paper_bgcolor='#0a1a1a', 
-                            font_color='#00ffcc', yaxis_title="Missing Count")
-            st.plotly_chart(fig, use_container_width=True)
-        else:
-            st.success("✅ No missing data detected!")
-    
-    with col2:
-        st.subheader("📊 Data Quality Distribution")
-        quality_dist = flight_data['DataQuality'].value_counts()
-        fig = px.pie(values=quality_dist.values, names=quality_dist.index,
-                    color_discrete_sequence=['#00ffcc', '#ffaa00', '#ff4141'])
-        fig.update_layout(plot_bgcolor='#0a1a1a', paper_bgcolor='#0a1a1a', font_color='#00ffcc')
-        st.plotly_chart(fig, use_container_width=True)
-    
-    st.markdown("---")
-    st.subheader("🔍 Anomaly Detection")
-    
-    # Detect anomalies
-    delay_mean = flight_data['DepDelay'].mean()
-    delay_std = flight_data['DepDelay'].std()
-    anomalies = flight_data[
-        (flight_data['DepDelay'] > delay_mean + 3 * delay_std) |
-        (flight_data['DepDelay'] < delay_mean - 3 * delay_std)
-    ]
-    
-    if len(anomalies) > 0:
-        st.warning(f"⚠️ {len(anomalies)} anomalies detected!")
-        st.dataframe(anomalies[['FlightNumber', 'Airline', 'Origin', 'Dest', 'DepDelay']].head(10))
-    else:
-        st.success("✅ No anomalies detected")
-    
-    if st.button("🔧 Run Data Validation"):
-        with st.spinner("Validating data..."):
-            time_module.sleep(1)
-            st.success("✅ Data validation complete!")
-            add_score(5, "Data quality check")
-
-# PAGE: API INTEGRATION
-elif page == "🔌 API Integration":
-    st.markdown("<h2 style='text-align: center; color: #00ffcc;'>🔌 API INTEGRATION</h2>", unsafe_allow_html=True)
-    
-    st.info("Connect with external systems and APIs")
-    
-    tab1, tab2, tab3 = st.tabs(["📡 REST API", "🔗 Webhooks", "📊 API Usage"])
-    
-    with tab1:
-        st.subheader("📡 REST API Endpoints")
-        
-        endpoints = [
-            {'method': 'GET', 'endpoint': '/api/flights', 'description': 'Get all flights'},
-            {'method': 'GET', 'endpoint': '/api/flights/{id}', 'description': 'Get specific flight'},
-            {'method': 'POST', 'endpoint': '/api/predict', 'description': 'Predict delay'},
-            {'method': 'GET', 'endpoint': '/api/analytics', 'description': 'Get analytics data'},
-            {'method': 'POST', 'endpoint': '/api/alerts', 'description': 'Create alert'}
-        ]
-        
-        for ep in endpoints:
-            color = {'GET': '#00ffcc', 'POST': '#ffaa00', 'PUT': '#00aaff', 'DELETE': '#ff4141'}
-            st.markdown(f"""
-            <div style='background: #0d2020; padding: 15px; border-radius: 10px; 
-                        border-left: 4px solid {color[ep['method']]}; margin-bottom: 10px;'>
-                <p style='color: {color[ep['method']]}; margin: 0; font-weight: bold;'>{ep['method']}</p>
-                <p style='color: #00ffcc; margin: 5px 0; font-family: monospace;'>{ep['endpoint']}</p>
-                <p style='color: #66ffdd; margin: 0;'>{ep['description']}</p>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        st.markdown("---")
-        st.subheader("🔑 API Key")
-        api_key = st.text_input("Your API Key", value="atc_" + hashlib.md5(st.session_state.username.encode()).hexdigest()[:16], disabled=True)
-        st.code(f"Authorization: Bearer {api_key}", language="bash")
-    
-    with tab2:
-        st.subheader("🔗 Webhook Configuration")
-        
-        webhook_url = st.text_input("Webhook URL", placeholder="https://your-server.com/webhook")
-        webhook_events = st.multiselect("Events", ['flight.delayed', 'alert.created', 'prediction.completed'])
-        
-        if st.button("💾 Save Webhook"):
-            st.success("✅ Webhook configured successfully!")
-            add_notification("Webhook configured", "success")
-    
-    with tab3:
-        st.subheader("📊 API Usage Statistics")
-        
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric("📞 Total Calls", "1,247")
-        with col2:
-            st.metric("✅ Success Rate", "99.2%")
-        with col3:
-            st.metric("⚡ Avg Response", "0.3s")
-        
-        # Usage chart
-        days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-        calls = np.random.randint(100, 300, 7)
-        
-        fig = px.bar(x=days, y=calls, color_discrete_sequence=['#00ffcc'])
-        fig.update_layout(plot_bgcolor='#0a1a1a', paper_bgcolor='#0a1a1a', 
-                         font_color='#00ffcc', yaxis_title="API Calls")
-        st.plotly_chart(fig, use_container_width=True)
+# Removed: Data Quality, Analytics, Weather, Collaboration, 3D Visualization, API Integration
+# These features were removed to focus on core operational functionality
 
 # PAGE: HELP & GUIDE
 elif page == "📚 Help & Guide":
@@ -1263,24 +1000,6 @@ elif page == "📋 Batch Prediction":
             st.download_button("📥 Download", csv, "predictions.csv")
             add_score(10, "Batch prediction")
 
-# PAGE: ANALYTICS
-elif page == "📈 Analytics":
-    st.markdown("<h2 style='text-align: center; color: #00ffcc;'>📈 ANALYTICS</h2>", unsafe_allow_html=True)
-    col1, col2 = st.columns(2)
-    with col1:
-        st.subheader("📊 Airline Performance")
-        airline_perf = flight_data.groupby('Airline')['DepDelay'].mean()
-        fig = px.bar(x=airline_perf.index, y=airline_perf.values, color_discrete_sequence=['#00ffcc'])
-        fig.update_layout(plot_bgcolor='#0a1a1a', paper_bgcolor='#0a1a1a', font_color='#00ffcc')
-        st.plotly_chart(fig, use_container_width=True)
-    with col2:
-        st.subheader("💰 Cost Analysis")
-        flight_data['Cost'] = flight_data['DepDelay'].apply(calculate_delay_cost)
-        cost_by_airline = flight_data.groupby('Airline')['Cost'].sum()
-        fig = px.bar(x=cost_by_airline.index, y=cost_by_airline.values, color_discrete_sequence=['#ff4141'])
-        fig.update_layout(plot_bgcolor='#0a1a1a', paper_bgcolor='#0a1a1a', font_color='#00ffcc')
-        st.plotly_chart(fig, use_container_width=True)
-
 # PAGE: ALERTS
 elif page == "🔔 Alerts":
     st.markdown("<h2 style='text-align: center; color: #00ffcc;'>🔔 ALERTS</h2>", unsafe_allow_html=True)
@@ -1300,21 +1019,6 @@ elif page == "📊 Historical Compare":
     with col2:
         historical = flight_data['DepDelay'].mean() * 1.1
         st.metric("Last Year", f"{historical:.1f} min", delta=f"{flight_data['DepDelay'].mean() - historical:.1f}")
-
-# PAGE: WEATHER
-elif page == "🌤️ Weather":
-    st.markdown("<h2 style='text-align: center; color: #00ffcc;'>🌤️ WEATHER</h2>", unsafe_allow_html=True)
-    airport = st.selectbox("🛫 Airport", ['JFK', 'LAX', 'ORD', 'ATL', 'DFW'])
-    weather = get_weather_data(airport)
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric("🌤️ Condition", weather['condition'])
-    with col2:
-        st.metric("🌡️ Temp", f"{weather['temperature']}°F")
-    with col3:
-        st.metric("💨 Wind", f"{weather['wind_speed']} mph")
-    with col4:
-        st.metric("👁️ Visibility", f"{weather['visibility']} mi")
 
 # PAGE: REPORTS
 elif page == "📄 Reports":
